@@ -1,0 +1,40 @@
+{
+  "name": "@sanity-labs/sdk-tasks",
+  "version": "0.0.1",
+  "private": false,
+  "type": "module",
+  "license": "MIT",
+  "description": "React hooks and action APIs for Sanity Labs tasks.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanity-labs/sdk-tasks.git"
+  },
+  "homepage": "https://github.com/sanity-labs/sdk-tasks#readme",
+  "bugs": {
+    "url": "https://github.com/sanity-labs/sdk-tasks/issues"
+  },
+  "keywords": ["sanity", "sanity-labs", "tasks", "react"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@sanity-labs/sdk-addon-dataset-runtime": "^0.0.1"
+  },
+  "peerDependencies": {
+    "@sanity/sdk-react": "^2.8.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  }
+}

@@ -1,0 +1,4 @@
+
+> @sanetti/sdk-tasks@0.0.1 typecheck /Users/sam.hemingway/Documents/GitHub/sanetti-3/packages/sdk-tasks
+> tsc --noEmit -p tsconfig.json
+
