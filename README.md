@@ -1,17 +1,14 @@
 # `@sanity-labs/sdk-tasks`
 
-React hooks and action APIs for Sanetti tasks.
+React hooks and action APIs for CRUD actions with Sanity tasks inside of a Sanity SDK app.
 
-This package owns task reads and writes. Task comments are intentionally not
-re-exported here; import those from `@sanity-labs/sdk-comments`.
-
-For a minimal end-to-end SDK app setup that combines runtime config, tasks, and
-comments, see [`docs/sdk-comments-tasks-app-quickstart.md`](../../docs/sdk-comments-tasks-app-quickstart.md).
+> This package owns task reads and writes. Task comments are intentionally not
+> re-exported here; import those from `@sanity-labs/sdk-comments`.
 
 ## Installation
 
 ```bash
-pnpm add @sanity-labs/sdk-addon-dataset-runtime @sanity-labs/sdk-tasks @sanity/sdk-react react react-dom
+pnpm add @sanity-labs/sdk-addon-dataset-runtime @sanity-labs/sdk-tasks
 ```
 
 ## Quick Start
@@ -19,26 +16,28 @@ pnpm add @sanity-labs/sdk-addon-dataset-runtime @sanity-labs/sdk-tasks @sanity/s
 ### Provider-Based Runtime
 
 ```tsx
-import {AddonDatasetRuntimeProvider} from '@sanity-labs/sdk-addon-dataset-runtime'
-import {useApplyTaskActions, useDocumentTasks} from '@sanity-labs/sdk-tasks'
+import { AddonDatasetRuntimeProvider } from "@sanity-labs/sdk-addon-dataset-runtime";
+import { useApplyTaskActions, useDocumentTasks } from "@sanity-labs/sdk-tasks";
 
-function TasksPanel({documentId}: {documentId: string}) {
-  const {sortedTasks} = useDocumentTasks({documentId})
-  const applyTaskActions = useApplyTaskActions({currentUserId: 'resource-user-1'})
+function TasksPanel({ documentId }: { documentId: string }) {
+  const { sortedTasks } = useDocumentTasks({ documentId });
+  const applyTaskActions = useApplyTaskActions({
+    currentUserId: "resource-user-1",
+  });
 
   return (
     <button
       onClick={() =>
         applyTaskActions.createTask({
           documentId,
-          documentType: 'article',
-          title: 'Review homepage headline',
+          documentType: "article",
+          title: "Review homepage headline",
         })
       }
     >
       {sortedTasks.length} tasks
     </button>
-  )
+  );
 }
 
 <AddonDatasetRuntimeProvider
@@ -47,7 +46,7 @@ function TasksPanel({documentId}: {documentId: string}) {
   projectId="myProjectId"
 >
   <TasksPanel documentId="article-123" />
-</AddonDatasetRuntimeProvider>
+</AddonDatasetRuntimeProvider>;
 ```
 
 ### Direct Configuration
@@ -57,20 +56,20 @@ runtime values, but it is not required. You can pass runtime values directly to
 the hooks instead:
 
 ```ts
-import {useApplyTaskActions, useDocumentTasks} from '@sanity-labs/sdk-tasks'
+import { useApplyTaskActions, useDocumentTasks } from "@sanity-labs/sdk-tasks";
 
 const tasks = useDocumentTasks({
-  addonDataset: 'production-comments',
-  documentId: 'article-123',
-  projectId: 'myProjectId',
-})
+  addonDataset: "production-comments",
+  documentId: "article-123",
+  projectId: "myProjectId",
+});
 
 const applyTaskActions = useApplyTaskActions({
-  addonDataset: 'production-comments',
-  contentDataset: 'production',
-  currentUserId: 'resource-user-1',
-  projectId: 'myProjectId',
-})
+  addonDataset: "production-comments",
+  contentDataset: "production",
+  currentUserId: "resource-user-1",
+  projectId: "myProjectId",
+});
 ```
 
 `currentUserId` should be your app's resource-user identifier, not just any
@@ -117,6 +116,3 @@ This package intentionally does not ship:
 - comment action hooks
 - task summary UI
 - assign-picker UI
-
-If the thing you are creating or mutating is a comment, use
-`@sanity-labs/sdk-comments`.
