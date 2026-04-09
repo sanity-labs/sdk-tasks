@@ -38,7 +38,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@sanity-labs/sdk-addon-dataset-runtime": "file:../sdk-addon-dataset-runtime"
+    "@sanity-labs/sdk-addon-dataset-runtime": "^1.0.0"
   },
   "peerDependencies": {
     "@sanity/sdk-react": "^2.8.0",

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@sanity-labs/sdk-addon-dataset-runtime':
-        specifier: file:../sdk-addon-dataset-runtime
-        version: file:../sdk-addon-dataset-runtime(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^1.0.0
+        version: 1.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@sanity/sdk-react':
         specifier: ^2.8.0
         version: 2.8.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -37,8 +37,8 @@ packages:
     resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
     engines: {node: '>=6.9.0'}
 
-  '@sanity-labs/sdk-addon-dataset-runtime@file:../sdk-addon-dataset-runtime':
-    resolution: {directory: ../sdk-addon-dataset-runtime, type: directory}
+  '@sanity-labs/sdk-addon-dataset-runtime@1.0.0':
+    resolution: {integrity: sha512-u20/Bz0EXosbydh7amXI0Zcx/JaNKd+lpy2Dy+diGHotRn95mRPNvaF9VM6t8BH5Rts9BzGUWnUMtXC9AQeXnQ==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -315,7 +315,7 @@ snapshots:
 
   '@babel/runtime@7.29.2': {}
 
-  '@sanity-labs/sdk-addon-dataset-runtime@file:../sdk-addon-dataset-runtime(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@sanity-labs/sdk-addon-dataset-runtime@1.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
