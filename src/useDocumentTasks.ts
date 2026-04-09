@@ -1,9 +1,9 @@
 import {useQuery} from '@sanity/sdk-react'
 import {useMemo} from 'react'
 
-import {TASKS_BY_DOCUMENT_QUERY} from './queries'
-import {requireRuntimeValue, useResolvedAddonRuntime} from './runtime'
-import type {TaskDocument} from './types'
+import {TASKS_BY_DOCUMENT_QUERY} from './queries.js'
+import {requireRuntimeValue, useResolvedAddonRuntime} from './runtime.js'
+import type {TaskDocument} from './types.js'
 
 interface UseDocumentTasksArgs {
   addonDataset?: string

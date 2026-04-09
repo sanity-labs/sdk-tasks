@@ -78,21 +78,111 @@ Sanity user plus the project user memberships exposed by `useUsers()`.
 
 ## Primary Exports
 
+- `createTaskHandle()`
+- `createTask()`
+- `editTask()`
+- `setTaskStatus()`
+- `deleteTask()`
+- `CreateTaskActionArgs`
+- `TaskAction`
+- `useTasks()`
+- `useTaskProjection()`
+- `useTask()`
+- `useEditTask()`
+- `useTasksByDocumentType()`
 - `useDocumentTasks()`
 - `useApplyTaskActions()`
 - `TaskDocument`
+- `TaskHandle`
 - `TaskEditPayload`
 - `TaskStatus`
 - `TaskContext`
+- `TasksByDocumentSummary`
+
+## Canonical Read Hooks
+
+The preferred SDK-shaped read path is:
+
+- `useTasks()` for lightweight task handles
+- `useTaskProjection()` for list or preview metadata
+- `useTask()` for one full task document
+- `useEditTask()` for scoped task editing
+
+`useDocumentTasks()` and `useTasksByDocumentType()` remain available as compatibility and convenience helpers for document-scoped and grouped task views.
+
+## Scoped Edit Hooks
+
+`useEditTask()` mirrors the SDK edit-hook ergonomics for task documents while
+keeping task writes scoped to the addon dataset.
+
+```ts
+import {useEditTask} from '@sanity-labs/sdk-tasks'
+
+const editTaskTitle = useEditTask<string>({
+  path: 'title',
+  taskId: 'task-123',
+})
+
+await editTaskTitle('Review homepage headline (updated)')
+```
+
+Omit `path` to edit the full task document. The hook diffs top-level task
+fields, ignores system keys such as `_id` / `_updatedAt`, stamps
+`lastEditedAt`, and unsets the targeted path if you pass `undefined`.
 
 ## Action API
 
-`useApplyTaskActions()` returns the task-domain write API:
+`useApplyTaskActions()` returns a callable dispatcher, analogous to
+`useApplyDocumentActions()` in `@sanity/sdk-react`, with the existing
+imperative helpers attached for convenience and migration.
+
+Canonical usage:
+
+```ts
+import {
+  createTask,
+  createTaskHandle,
+  useApplyTaskActions,
+} from '@sanity-labs/sdk-tasks'
+
+const applyTaskActions = useApplyTaskActions()
+
+await applyTaskActions(
+  createTask(
+    createTaskHandle({
+      addonDataset: 'production-comments',
+      projectId: 'myProjectId',
+      taskId: crypto.randomUUID(),
+    }),
+    {
+      authorId: 'resource-user-1',
+      contentDataset: 'production',
+      documentId: 'article-123',
+      documentType: 'article',
+      title: 'Review homepage headline',
+    },
+  ),
+)
+```
+
+For migration, the hook still exposes the existing imperative helpers:
 
 - `createTask(args)`
 - `editTask(taskId, payload)`
 - `setTaskStatus(taskId, status)`
 - `deleteTask(taskId)`
+
+The dispatcher accepts either one action or an array of actions. The attached
+helper methods build the action descriptors for you and then dispatch them.
+
+## SDK Alignment
+
+This package intentionally keeps the same handle-first, projection-first,
+dispatcher-style shape as the Sanity SDK. Under the hood, task writes execute
+direct live-edit client mutations instead of the SDK draft document action
+pipeline, because tasks live in the addon dataset as live-edit records rather
+than draftable content documents. That preserves the familiar SDK mental model
+while keeping task persistence correct for addon documents.
 
 This hook only covers task lifecycle actions. It does not create or mutate
 comments on tasks.

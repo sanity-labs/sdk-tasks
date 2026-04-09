@@ -1,17 +1,19 @@
-import {useClient} from '@sanity/sdk-react'
 import {useCallback, useMemo} from 'react'
 
-import {requireRuntimeValue, useResolvedAddonRuntime} from './runtime'
-import type {TaskDocument, TaskEditPayload, TaskStatus} from './types'
+import {
+  createTask as createTaskAction,
+  deleteTask as deleteTaskAction,
+  editTask as editTaskAction,
+  setTaskStatus as setTaskStatusAction,
+  type CreateTaskActionArgs,
+  type TaskAction,
+} from './actions.js'
+import {createTaskHandle} from './handles.js'
+import {requireRuntimeValue, useAddonMutationClient, useResolvedAddonRuntime} from './runtime.js'
+import type {TaskDocument, TaskEditPayload, TaskStatus} from './types.js'
 
-interface CreateTaskArgs {
-  assignedTo?: string
-  description?: TaskDocument['description']
-  documentId: string
-  documentType: string
-  dueBy?: string
-  subscribers?: string[]
-  title: string
+interface CreateTaskArgs extends Omit<CreateTaskActionArgs, 'authorId' | 'contentDataset'> {
+  taskId?: string
 }
 
 interface UseApplyTaskActionsOptions {
@@ -24,6 +26,14 @@ interface UseApplyTaskActionsOptions {
   workspaceTitle?: string
 }
 
+interface ApplyTaskActionsApi {
+  (action: TaskAction | TaskAction[]): Promise<unknown>
+  createTask: (args: CreateTaskArgs) => Promise<Pick<TaskDocument, '_id'>>
+  deleteTask: (taskId: string) => Promise<unknown>
+  editTask: (taskId: string, payload: TaskEditPayload) => Promise<unknown>
+  setTaskStatus: (taskId: string, status: TaskStatus) => Promise<unknown>
+}
+
 export function useApplyTaskActions({
   addonDataset: addonDatasetOverride,
   apiVersion = '2025-05-06',
@@ -32,7 +42,7 @@ export function useApplyTaskActions({
   projectId: projectIdOverride,
   workspaceId: workspaceIdOverride,
   workspaceTitle: workspaceTitleOverride,
-}: UseApplyTaskActionsOptions = {}) {
+}: UseApplyTaskActionsOptions = {}): ApplyTaskActionsApi {
   const {addonDataset, contentDataset, projectId, workspaceId, workspaceTitle} =
     useResolvedAddonRuntime({
       addonDataset: addonDatasetOverride,
@@ -41,101 +51,129 @@ export function useApplyTaskActions({
       workspaceId: workspaceIdOverride,
       workspaceTitle: workspaceTitleOverride,
     })
-  const baseClient = useClient({apiVersion})
+  const mutationClient = useAddonMutationClient({
+    addonDataset,
+    apiVersion,
+    projectId,
+  })
 
-  const client = useMemo(
-    () =>
-      baseClient.withConfig({
-        dataset: requireRuntimeValue(addonDataset, 'Addon dataset'),
-        projectId: requireRuntimeValue(projectId, 'Project ID'),
-      }),
-    [addonDataset, baseClient, projectId],
+  const dispatch = useCallback(
+    async (actionOrActions: TaskAction | TaskAction[]) => {
+      const runtime = {
+        addonDataset,
+        contentDataset,
+        currentUserId: currentUserId ?? 'unknown',
+        projectId,
+        workspaceId,
+        workspaceTitle,
+      }
+
+      console.debug('[sdk-tasks/useApplyTaskActions] dispatch:start', {
+        actions: Array.isArray(actionOrActions) ? actionOrActions : [actionOrActions],
+        runtime,
+      })
+
+      try {
+        const result = await mutationClient.execute(actionOrActions)
+        console.debug('[sdk-tasks/useApplyTaskActions] dispatch:success', {
+          actions: Array.isArray(actionOrActions) ? actionOrActions : [actionOrActions],
+          result,
+          runtime,
+        })
+        return result
+      } catch (error) {
+        console.error('[sdk-tasks/useApplyTaskActions] dispatch:failed', {
+          actions: Array.isArray(actionOrActions) ? actionOrActions : [actionOrActions],
+          error,
+          runtime,
+        })
+        throw error
+      }
+    },
+    [
+      addonDataset,
+      contentDataset,
+      currentUserId,
+      mutationClient,
+      projectId,
+      workspaceId,
+      workspaceTitle,
+    ],
   )
 
   const createTask = useCallback(
-    async ({
-      assignedTo,
-      description,
-      documentId,
-      documentType,
-      dueBy,
-      subscribers,
-      title,
-    }: CreateTaskArgs) => {
-      const resolvedContentDataset = requireRuntimeValue(contentDataset, 'Content dataset')
-      const resolvedProjectId = requireRuntimeValue(projectId, 'Project ID')
-      const authorId = currentUserId ?? 'unknown'
-      const now = new Date().toISOString()
-
-      return await client.create({
-        _type: 'tasks.task' as const,
-        authorId,
-        context:
-          workspaceId || workspaceTitle
-            ? {
-                payload: {workspace: workspaceId ?? ''},
-                tool: 'sanetti',
-              }
-            : undefined,
-        createdByUser: now,
-        description,
-        status: 'open',
-        subscribers: subscribers ?? (assignedTo ? [authorId, assignedTo] : [authorId]),
-        target: {
-          document: {
-            _dataset: resolvedContentDataset,
-            _projectId: resolvedProjectId,
-            _ref: documentId.replace('drafts.', ''),
-            _type: 'crossDatasetReference' as const,
-            _weak: true,
-          },
-          documentType,
-        },
-        title,
-        ...(assignedTo ? {assignedTo} : {}),
-        ...(dueBy ? {dueBy} : {}),
+    async ({taskId = crypto.randomUUID(), ...args}: CreateTaskArgs) => {
+      const handle = createTaskHandle({
+        addonDataset: requireRuntimeValue(addonDataset, 'Addon dataset'),
+        projectId: requireRuntimeValue(projectId, 'Project ID'),
+        taskId,
       })
+
+      return await dispatch(
+        createTaskAction(handle, {
+          ...args,
+          authorId: currentUserId ?? 'unknown',
+          contentDataset: requireRuntimeValue(contentDataset, 'Content dataset'),
+          workspaceId,
+          workspaceTitle,
+        }),
+      ).then(() => ({_id: handle.documentId}))
     },
-    [client, contentDataset, currentUserId, projectId, workspaceId, workspaceTitle],
+    [addonDataset, contentDataset, currentUserId, dispatch, projectId, workspaceId, workspaceTitle],
   )
 
   const editTask = useCallback(
-    async (taskId: string, payload: TaskEditPayload) => {
-      return await client
-        .patch(taskId)
-        .set({
-          ...payload,
-          lastEditedAt: new Date().toISOString(),
-        })
-        .commit()
-    },
-    [client],
+    async (taskId: string, payload: TaskEditPayload) =>
+      await dispatch(
+        editTaskAction(
+          createTaskHandle({
+            addonDataset: requireRuntimeValue(addonDataset, 'Addon dataset'),
+            projectId: requireRuntimeValue(projectId, 'Project ID'),
+            taskId,
+          }),
+          payload,
+        ),
+      ),
+    [addonDataset, dispatch, projectId],
   )
 
   const setTaskStatus = useCallback(
-    async (taskId: string, status: TaskStatus) => {
-      return await client
-        .patch(taskId)
-        .set({
-          lastEditedAt: new Date().toISOString(),
+    async (taskId: string, status: TaskStatus) =>
+      await dispatch(
+        setTaskStatusAction(
+          createTaskHandle({
+            addonDataset: requireRuntimeValue(addonDataset, 'Addon dataset'),
+            projectId: requireRuntimeValue(projectId, 'Project ID'),
+            taskId,
+          }),
           status,
-        })
-        .commit()
-    },
-    [client],
+        ),
+      ),
+    [addonDataset, dispatch, projectId],
   )
 
   const deleteTask = useCallback(
-    async (taskId: string) => {
-      return await client.delete(taskId)
-    },
-    [client],
+    async (taskId: string) =>
+      await dispatch(
+        deleteTaskAction(
+          createTaskHandle({
+            addonDataset: requireRuntimeValue(addonDataset, 'Addon dataset'),
+            projectId: requireRuntimeValue(projectId, 'Project ID'),
+            taskId,
+          }),
+        ),
+      ),
+    [addonDataset, dispatch, projectId],
   )
 
-  return {
-    createTask,
-    deleteTask,
-    editTask,
-    setTaskStatus,
-  }
+  return useMemo(
+    () =>
+      Object.assign(dispatch, {
+        createTask,
+        deleteTask,
+        editTask,
+        setTaskStatus,
+      }),
+    [createTask, deleteTask, dispatch, editTask, setTaskStatus],
+  ) as ApplyTaskActionsApi
 }

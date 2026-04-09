@@ -13,7 +13,12 @@
   "bugs": {
     "url": "https://github.com/sanity-labs/sdk-tasks/issues"
   },
-  "keywords": ["sanity", "sanity-labs", "tasks", "react"],
+  "keywords": [
+    "sanity",
+    "sanity-labs",
+    "tasks",
+    "react"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -24,17 +29,26 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@sanity-labs/sdk-addon-dataset-runtime": "^0.0.1"
+    "@sanity-labs/sdk-addon-dataset-runtime": "file:../sdk-addon-dataset-runtime"
   },
   "peerDependencies": {
     "@sanity/sdk-react": "^2.8.0",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "packageManager": "pnpm@10.32.1",
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.2"
   }
 }
