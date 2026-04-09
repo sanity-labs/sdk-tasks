@@ -30,6 +30,13 @@ jobs:
           node-version: 24.14.0
           cache: pnpm
 
+      - name: Clone and build sdk-addon-dataset-runtime (pnpm file:../ dependency)
+        run: |
+          git clone --depth 1 https://github.com/sanity-labs/sdk-addon-dataset-runtime.git "${GITHUB_WORKSPACE}/../sdk-addon-dataset-runtime"
+          cd "${GITHUB_WORKSPACE}/../sdk-addon-dataset-runtime"
+          pnpm install --frozen-lockfile
+          pnpm build
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test --if-present
